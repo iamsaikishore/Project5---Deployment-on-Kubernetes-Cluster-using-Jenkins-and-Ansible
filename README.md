@@ -270,6 +270,10 @@ sudo docker run hello-world
 
 This command downloads a test image and runs it in a container. When the container runs, it prints a confirmation message and exits.
 
+```shell
+sudo chmod 777 /var/run/docker.sock
+```
+
 ### Configuring Kubernetes cluster
 
 **Install the Docker**
