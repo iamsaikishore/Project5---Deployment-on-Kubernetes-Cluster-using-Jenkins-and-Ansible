@@ -11,4 +11,4 @@ spec:
       nodePort: 31200
   selector:
     app: kishq-app                   
-  type: NodePort                   
+  type: LoadBalancer               
