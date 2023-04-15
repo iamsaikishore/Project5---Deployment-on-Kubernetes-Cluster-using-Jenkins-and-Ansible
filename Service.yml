@@ -1,14 +1,14 @@
 kind: Service                             
 apiVersion: v1
 metadata:
-  name: mrdevops
+  name: kishq-app
   labels:
-    app: mrdevops
+    app: kishq-app
 spec:
   ports:
     - port: 8080                               
       targetPort: 80                    
       nodePort: 31200
   selector:
-    app: mrdevops                    
-  type: LoadBalancer                   
+    app: kishq-app                   
+  type: NodePort                   
