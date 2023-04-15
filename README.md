@@ -2,6 +2,8 @@
 
 In this project we are going to deploy an application on Kubernetes cluster using Jenkins as Continuous Integration tool, configuring the webhook so if the developer commits the code to GitHub, it will trigger the Jenkins pipeline, dockerize the application and deploying the application on to Kubernetes cluster using Ansible.
 
+![Screenshot (261)](https://user-images.githubusercontent.com/129657174/232227727-217b75be-8051-472d-b87f-3dfd938a5277.png)
+
 **Prerequisites:** Git, GitHub, Jenkins, Ansible, Docker, Docker Hub, Kubernetes
 
 For this project, we are going to launch 3 EC2 instances, 2 instances will be t2.micro for Jenkins and Ansible, and one will be t2.medium for Kubernetes Cluster.
@@ -11,6 +13,8 @@ For this project, we are going to launch 3 EC2 instances, 2 instances will be t2
 1. Jenkins server (default jre, jenkins)
 2. Ansible server (python, ansible, docker)
 3. Kubernetes cluster (docker, kind)
+
+![Screenshot (270)](https://user-images.githubusercontent.com/129657174/232242043-d9a264bc-5f8c-4aae-9885-72d874bcad28.png)
 
 ### Configuring Jenkins server
 
@@ -83,21 +87,6 @@ Now that Jenkins and its dependencies are in place, we’ll start the Jenkins se
 sudo systemctl enable jenkins.service
 sudo systemctl start jenkins.service
 sudo systemctl status jenkins.service
-```
-
-Grant Jenkins user and ec2-user user permission to docker deamon.
-
-```
-sudo su - 
-usermod -aG docker jenkins
-usermod -aG docker ec2-user
-systemctl restart docker
-```
-
-As we installed many tools, its better to restart the server
-
-```
-sudo reboot now
 ```
 
 **Note: ** By default, Jenkins will not be accessible to the external world due to the inbound traffic restriction by AWS. Open port 8080 in the inbound traffic rules as show below.
@@ -281,6 +270,84 @@ sudo chmod 777 /var/run/docker.sock
 ### Configuring Kubernetes cluster
 
 **Install the Docker**
+  
+### Install kubectl binary with curl on Linux
+
+1. Download the latest release with the command:
+
+```shell
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+```
+  
+**Note:** To download a specific version, replace the `$(curl -L -s https://dl.k8s.io/release/stable.txt)` portion of the command with the specific version.
+
+For example, to download version v1.27.0 on Linux, type:
+
+```shell
+curl -LO https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
+```
+  
+2. Validate the binary (optional)
+
+Download the kubectl checksum file:
+
+```shell
+curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+```
+  
+Validate the kubectl binary against the checksum file:
+
+```shell
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+```
+  
+If valid, the output is:
+
+```shell
+kubectl: OK
+```
+  
+If the check fails, sha256 exits with nonzero status and prints output similar to:
+
+```shell
+kubectl: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match
+```
+  
+**Note:** Download the same version of the binary and checksum.
+
+3. Install kubectl
+
+```shell
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+```
+  
+**Note:** If you do not have root access on the target system, you can still install kubectl to the ~/.local/bin directory:
+
+```shell
+chmod +x kubectl
+mkdir -p ~/.local/bin
+mv ./kubectl ~/.local/bin/kubectl
+# and then append (or prepend) ~/.local/bin to $PATH
+```
+  
+Test to ensure the version you installed is up-to-date:
+
+```shell
+kubectl version --client
+```
+  
+**Note:** The above command will generate a warning:
+
+WARNING: This version information is deprecated and will be replaced with the output from kubectl version --short.
+
+You can ignore this warning. You are only checking the version of kubectl that you have installed.
+
+Or use this for detailed view of version:
+
+```shell
+kubectl version --client --output=yaml    
+```
 
 ### Kind
 
@@ -298,7 +365,9 @@ sudo mv ./kind /usr/local/bin/kind
 
 A simple configuration for Multi-node cluster can be achieved with the following
 
-``` vim kind-cluster.yml```
+```
+vim kind-cluster.yml
+```
 
 ```
 # three node (two workers) cluster config
@@ -310,7 +379,9 @@ nodes:
 - role: worker
 ```
 
-```kind create cluster --config kind-cluster.yml```
+```
+kind create cluster --config kind-cluster.yml
+```
 
 
 
@@ -318,7 +389,7 @@ nodes:
   
 ### Configuring Credentials on Jenkins
 
-For Jenkins to communicate with Ansible
+For Jenkins to communicate with Ansible and Kubernetes
 
    -  Go to Manage Jenkins > Manage Credentials > System > Global credentials (unrestricted) > Add Credentials
    -  Select Kind as SSH Username with private key
@@ -335,6 +406,48 @@ For DockerHub
    -  In the field of Secret give your DockerHub password and name it as docker_passwd in ID and Description.
    -  Click Save  
   
+For Ansible to communicate with Kubernetes
+  
+Go to Kubernetes server, set the password for ubuntu user
+  
+```shell
+sudo passwd ubuntu
+```
+
+![Screenshot (274)](https://user-images.githubusercontent.com/129657174/232245198-7676d222-411e-4f06-a591-ed80ccc9df71.png)
+
+```shell
+sudo vim /etc/ssh/sshd_config
+```
+Change `PasswordAuthentication no` to `PasswordAuthentication yes`
+  
+```shell
+sudo systemctl restart sshd
+```
+![Screenshot (273)](https://user-images.githubusercontent.com/129657174/232245458-57b98681-cc58-4da0-a396-2bf14a56f147.png)
+
+![Screenshot (271)](https://user-images.githubusercontent.com/129657174/232245461-21333ba2-9ac1-4b89-8d5d-9aae7d99f652.png)
+
+![Screenshot (272)](https://user-images.githubusercontent.com/129657174/232245464-fd5c0e4a-86dc-46fd-b719-00eb10a89bd5.png)
+
+Now go to Ansible server
+  
+```shell
+sudo vim /etc/ansible/hosts
+```
+  
+Add the Private IP of your Kubernetes server as showm below
+  
+![Screenshot (275)](https://user-images.githubusercontent.com/129657174/232246554-f855d434-d6d4-4100-8b9e-a602080e8f32.png)
+
+![Screenshot (276)](https://user-images.githubusercontent.com/129657174/232246557-1247ab99-6d11-40c3-bcba-71e8fd0d3afb.png)
+
+```shell
+ansible -m ping webapp
+```
+  
+![Screenshot (277)](https://user-images.githubusercontent.com/129657174/232246656-2273e279-0904-40f1-93f4-50ae00a2d69b.png)
+
 ### Configuring Webhook
 
    -  Go to your GitHub Project Repository
