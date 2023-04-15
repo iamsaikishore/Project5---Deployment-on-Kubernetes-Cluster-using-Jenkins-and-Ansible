@@ -1,20 +1,20 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-   name: mrdevops
+   name: kishq-app
 spec:
    replicas: 2
    selector:      # tells the controller which pods to watch/belong to
     matchLabels:
-     app: mrdevops
+     app: kishq-app
    template:
       metadata:
         labels:
-          app: mrdevops
+          app: kishq-app
       spec:
        containers:
-        - name: mrdevops
-          image: vikashashoke/pipeline-demo
+        - name: kishq-app
+          image: iamsaikishore/kishq-app
           imagePullPolicy: Always
           ports:
           - containerPort: 80
