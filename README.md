@@ -13,9 +13,11 @@ For this project, we are going to launch 3 EC2 instances, 2 instances will be t2
 #### Install Java
 
 ```shell
-update-java-alternatives --list
-sudo update-alternatives --config java
+sudo apt update -y
+sudo apt install default-jre -y
+java --version
 ```
+```sudo update-alternatives --config java or sudo update-alternatives --list java```
 
 ### Git
 
@@ -43,7 +45,8 @@ Jenkins achieves Continuous Integration with the help of plugins. Plugins allow 
 First, add the repository key to your system:
 
 ```
-wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key |sudo gpg --dearmor -o /usr/share/keyrings/jenkins.gpg
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
 ```
 
 The `gpg --dearmor` command is used to convert the key into a format that `apt` recognizes.
@@ -51,21 +54,23 @@ The `gpg --dearmor` command is used to convert the key into a format that `apt` 
 Next, let’s append the Debian package repository address to the server’s `sources.list`:
 
 ```
-sudo sh -c 'echo deb [signed-by=/usr/share/keyrings/jenkins.gpg] http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
 ```
 
-The `[signed-by=/usr/share/keyrings/jenkins.gpg]` portion of the line ensures that `apt` will verify files in the repository using the GPG key that you just downloaded.
+The `[signed-by=/usr/share/keyrings/jenkins.asc]` portion of the line ensures that `apt` will verify files in the repository using the GPG key that you just downloaded.
 
 After both commands have been entered, run `apt update` so that `apt` will use the new repository.
 
 ```
-sudo apt update
+sudo apt-get update -y
 ```
 
 Finally, install Jenkins and its dependencies:
 
 ```
-sudo apt install jenkins
+sudo apt-get install jenkins -y
 ```
 
 Now that Jenkins and its dependencies are in place, we’ll start the Jenkins server.
@@ -73,6 +78,7 @@ Now that Jenkins and its dependencies are in place, we’ll start the Jenkins se
 ```
 sudo systemctl enable jenkins.service
 sudo systemctl start jenkins.service
+sudo systemctl status jenkins.service
 ```
 
 Grant Jenkins user and ec2-user user permission to docker deamon.
@@ -236,7 +242,7 @@ sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
    1. Update the apt package index:
 
 ```shell
-sudo apt-get update
+sudo apt-get update -y
 ```
 
    Receiving a GPG error when running apt-get update?
@@ -245,7 +251,7 @@ sudo apt-get update
 
 ```shell
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
-sudo apt-get update
+sudo apt-get update -y
 ```
 
    2. Install Docker Engine, containerd, and Docker Compose.
