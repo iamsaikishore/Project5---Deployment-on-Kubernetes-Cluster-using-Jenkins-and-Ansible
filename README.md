@@ -1,8 +1,12 @@
-# Project5---Deployment-on-Kubernetes-Cluster-using-Jenkins-and-Ansible
+# Deployment an Application on Kubernetes Cluster using Jenkins and Ansible
+
+In this project we are going to deploy an application on Kubernetes cluster using Jenkins as Continuous Integration tool, configuring the webhook so if the developer commits the code to GitHub, it will trigger the Jenkins pipeline, dockerize the application and deploying the application on to Kubernetes cluster using Ansible.
 
 **Prerequisites:** Git, GitHub, Jenkins, Ansible, Docker, Docker Hub, Kubernetes
 
-For this project, we are going to launch 3 EC2 instances, 2 instances will be t2.micro and one will be t2.medium
+For this project, we are going to launch 3 EC2 instances, 2 instances will be t2.micro for Jenkins and Ansible, and one will be t2.medium for Kubernetes Cluster.
+
+**Note:** While you are launching the EC2 instance preserve the private key of your Key-Pair which we will use in this tutorial for establishing communication between the servers using SSH.
 
 1. Jenkins server (default jre, jenkins)
 2. Ansible server (python, ansible, docker)
@@ -158,7 +162,7 @@ Install the Required plugins in Jenkins
 
    - Log in to Jenkins.
    - Go to Manage Jenkins > Manage Plugins.
-   - In the Available tab, search for `SSH Agent`, `Publish over SSH`.
+   - In the Available tab, search for `SSH Agent`.
    - Select the plugins and click the Install button.
    - Restart Jenkins after the plugin is installed. `http://<ec2-instance-public-ip-address>:8080/restart`
    
@@ -310,6 +314,63 @@ nodes:
 
 
 
+  
+  
+### Configuring Credentials on Jenkins
+
+For Jenkins to communicate with Ansible
+
+   -  Go to Manage Jenkins > Manage Credentials > System > Global credentials (unrestricted) > Add Credentials
+   -  Select Kind as SSH Username with private key
+   -  In the ID and Description field, 'JenkinsAccess'
+   -  Give the Username (your default username, if your linux is Ubuntu then username is ubuntu, if your linux is Amazon linux         then username is ec2-user)
+   -  Private Key > Enter directly > Add >  of your KeyPair (open the keypair which you have created when launching your         instance and copy it)
+   -  Click Create
+  
+For DockerHub
+
+   -  Now go to [DockerHub](https://hub.docker.com/) create a user and create a new repository with name 'kishq-app'
+   -  Go to Manage Jenkins > Manage Credentials > System > Global credentials (unrestricted) > Add Credentials
+   -  Select Kind as Secret text
+   -  In the field of Secret give your DockerHub password and name it as docker_passwd in ID and Description.
+   -  Click Save  
+  
+### Configuring Webhook
+
+   -  Go to your GitHub Project Repository
+   -  Settings > Webhooks > Add webhook
+   -  Give the GitHub Password
+   -  Payload URL > http://<Jenkins_URL:Port>/github-webhook/
+   -  Content type > application/json
+   -  For Secret go to your Jenkins server > Click on your Profile > Configure
+   -  API Token > Add new Token > Give a name > Generate
+   -  Copy the Token and paste it in Secret.
+   -  Add webhook
+   -  Now go to your Jenkins Job > Configure > Under Build Triggers > Select GitHub hook trigger for GITScm polling > Save
+  
+![Screenshot (262)](https://user-images.githubusercontent.com/129657174/232227220-4a301706-4a8e-45c9-b16c-ae91d2e69b18.png)
+
+![Screenshot (264)](https://user-images.githubusercontent.com/129657174/232227223-328985ec-b8f3-4879-819d-2c8f0af7e9b5.png)
+
+![Screenshot (265)](https://user-images.githubusercontent.com/129657174/232227230-0fe3dbe2-9456-410d-8a9b-08e48de005bc.png)
+
+![Screenshot (266)](https://user-images.githubusercontent.com/129657174/232227238-bb15cab2-a8fb-4894-9e02-41edd1936d4b.png)
+
+![Screenshot (267)](https://user-images.githubusercontent.com/129657174/232227240-f5935ee3-0895-44c1-81ba-e66c1d4b87ab.png)
+
+![Screenshot (268)](https://user-images.githubusercontent.com/129657174/232227245-b08bb5db-8128-464c-aa45-dfd36f6ad195.png)
+
+![Screenshot (269)](https://user-images.githubusercontent.com/129657174/232227247-8bcdf118-84c5-4c6a-8e02-06a6df25c5c4.png)
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 
